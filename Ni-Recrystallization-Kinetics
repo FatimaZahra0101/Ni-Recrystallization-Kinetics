@@ -1,0 +1,57 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def calculate_jmak(t, T, Q, strain_energy):
+    """
+    Calculates the recrystallized fraction using the JMAK equation.
+    Xt = 1 - exp(-k * t^n)
+    """
+    R = 8.314  # Gas constant J/(mol*K)
+    n = 3      # Avrami exponent (standard for 3D growth)
+    
+    # Pre-exponential factor scaled by stored energy (PBF-LB/M impact)
+    k_0 = 1e12 * (strain_energy / 1e6) 
+    
+    # Rate constant k following Arrhenius law
+    k = k_0 * np.exp(-Q / (R * T))
+    
+    xt = 1 - np.exp(-k * (t**n))
+    return xt
+
+def run_simulation():
+    # Parameters for High-Purity Nickel
+    Q_nickel = 180000  # Activation energy for Ni recrystallization (J/mol)
+    time_range = np.linspace(0, 120, 500)  # 0 to 120 minutes
+    
+    # Simulating different PBF-LB/M Process States (Stored Energy in J/m^3)
+    # High Laser Speed = High Residual Stress = Higher Stored Energy
+    process_params = {
+        "High Energy Density (High Stress)": 5.0e6,
+        "Medium Energy Density": 3.5e6,
+        "Low Energy Density (Low Stress)": 2.0e6
+    }
+    
+    temp_kelvin = 873  # 600 Degrees Celsius
+    
+    plt.figure(figsize=(10, 6))
+    
+    for label, energy in process_params.items():
+        fractions = calculate_jmak(time_range, temp_kelvin, Q_nickel, energy)
+        plt.plot(time_range, fractions, label=f"{label} ($E_s$={energy:.1e})", linewidth=2)
+
+    plt.title(f"Recrystallization Kinetics of PBF-LB/M Nickel at {temp_kelvin-273}°C", fontsize=14)
+    plt.xlabel("Time (minutes)", fontsize=12)
+    plt.ylabel("Recrystallized Fraction ($X_t$)", fontsize=12)
+    plt.axhline(y=0.5, color='r', linestyle='--', alpha=0.5, label="50% Recrystallization")
+    plt.grid(True, linestyle=':', alpha=0.6)
+    plt.legend()
+    plt.tight_layout()
+    
+    # Save the result for GitHub
+    plt.savefig('nickel_recrystallization_plot.png')
+    plt.show()
+
+if __name__ == "__main__":
+    print("Starting Nickel Recrystallization Simulator...")
+    run_simulation()
+    print("Simulation complete. Plot saved as 'nickel_recrystallization_plot.png'.")
